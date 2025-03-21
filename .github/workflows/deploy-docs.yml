@@ -31,17 +31,20 @@ jobs:
           # 如果你文档需要 Git 子模块，取消注释下一行
           # submodules: true
 
-
+      - name: 设置 pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.9.0+sha512.60c18acd138bff695d339be6ad13f7e936eea6745660d4cc4a776d5247c540d0edee1a563695c183a66eb917ef88f2b4feb1fc25f32a7adcadc7aaf3438e99c1
 
       - name: 设置 Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 20
           cache: pnpm
 
       - name: 安装依赖
         run: |
-          corepack enable
+          corepack prepare pnpm@9.9.0 --activate
           pnpm install --frozen-lockfile
 
       - name: 构建文档
