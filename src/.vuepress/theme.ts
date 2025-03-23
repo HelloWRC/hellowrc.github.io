@@ -32,7 +32,12 @@ export default hopeTheme({
     description: "一个高中在读学生，平时喜欢写一些有意思的小东西。",
     intro: "/intro.html",
     medias: {
-      GitHub: "https://github.com/HelloWRC"
+      GitHub: "https://github.com/HelloWRC",
+      Bilibili: "https://space.bilibili.com/355897687/",
+      // Miyoushe: {
+      //   // 链接
+      //   link: "https://www.miyoushe.com/sr/accountCenter/postList?id=337298852",
+      // },
     },
   },
 
