@@ -4,14 +4,14 @@ import navbar from "./navbar.js";
 import sidebar from "./sidebar.js";
 
 export default hopeTheme({
-  hostname: "https://hellowrc.dev",
+  hostname: "https://blogs.hellowrc.dev",
 
   author: {
     name: "HelloWRC",
-    url: "https://hellowrc.dev",
+    url: "https://blogs.hellowrc.dev",
   },
 
-  logo: "https://hellowrc.dev/avatar-circle.png",
+  logo: "https://blogs.hellowrc.dev/avatar-circle.png",
 
   repo: "HelloWRC/hellowrc.github.io",
 
