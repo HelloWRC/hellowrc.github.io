@@ -69,6 +69,7 @@ export default hopeTheme({
     imgSize: true,
     include: true,
     mark: true,
+    mermaid: true,
     plantuml: true,
     spoiler: true,
     stylize: [
@@ -113,9 +114,6 @@ export default hopeTheme({
 
     // 在启用之前安装 flowchart.ts
     // flowchart: true,
-
-    // 在启用之前安装 mermaid
-    // mermaid: true,
 
     // playground: {
     //   presets: ["ts", "vue"],
