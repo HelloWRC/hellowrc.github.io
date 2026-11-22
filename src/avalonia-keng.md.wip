@@ -1,0 +1,68 @@
+# 我的 Avalonia（及相关跨平台库）踩坑记
+
+> ：Avalonia 四大玄学之样式、绑定、渲染、布局
+> ​：Avalonia 干的不就是这四件事吗，那还剩啥
+> —— 节选自 ClassIsland 社群的某段聊天记录
+
+我是差不多去年的这个时候，将我的一个较大规模 WPF 应用 [ClassIsland](https://github.com/ClassIsland/ClassIsland) 移植到 Avalonia 时开始接触 Avalonia 的。Avalonia 是一个很好的跨平台框架，但在我这不长的使用 Avalonia 及相关的跨平台库的过程中，我遇到了许多奇奇怪怪的问题，也了解到/探索出了这些问题的解决方式。在本文中我会以我鄙见，对我遇到的这些邪门问题及其解决方案进行讲解。部分问题可能已经过时或已被解决，如有疏漏，还请谅解。
+
+这篇文章只介绍了我踩过的一些邪门的坑，不是 Avalonia 入门教程。
+
+## 反射绑定中 $parent[] 无法解析通过没有显式指定程序集的 `clr-namespace` 引入的类名
+
+这个问题我最初在 Avalonia 11 中遇到，我还没有测试在 Avalonia 12 及其更新版本中还有没有这个问题。但是在 Avalonia 12 已经默认启用了编译绑定，所以遇到这个问题的概率可能一般比较小。
+
+一般来说，如果我们要在绑定语法中查找并绑定某个父级，我们会用以下绑定语法：
+
+``` xml
+<TextBlock Text="{Binding $parent[myns:MyParent].Prop}"/>
+```
+
+然而，如果其中的 MyParent 类在引入命名空间时使用了 `clr-namespace:` 进行引入，并没有显式指定程序集，且没有使用编译绑定，比如像下面这样：
+
+``` xml
+<Window
+    xmlns:myns="clr-namespace:MyApp.Models"/>
+```
+
+那么上面的绑定语句中就会无法解析 MyParent 类，并抛出异常。
+
+一般来说，有以下几种解决方法：
+
+1. **显式指定程序集**
+    这是最方便的解决方法。只要把命名空间声明改成以下形式，显式指定引入的命名空间来源即可：
+
+    ``` plaintext
+    clr-namespace:MyApp.Models;assembly=MyAssembly
+    ```
+
+2. **使用 using: 引入**
+    即使用 using: 声明命名空间：
+
+    ``` plaintext
+    using:MyApp.Models
+    ```
+
+    然而需要注意的是，这样可能会导致 HotAvalonia 热重载无法正确热重载含这样的命名空间声明的文件。这个我们会在后面提到。
+
+3. **启用编译绑定**
+    如果你的项目的条件无法支持你进行以上两种修复方式，可以考虑[启用编译绑定](https://docs.avaloniaui.net/docs/data-binding/compiled-bindings)。
+
+    如果没有条件在整个项目启用编译绑定，也可以在要进行绑定的 XAML 元素上使用 `x:CompileBindings="True"` 局部启用编译绑定。
+
+## Avalonia 与 SoundFlow 配合使用时应用在特定情况下卡死/崩溃
+
+::: note
+这部分指南针对 SoundFlow 1.2.1 编写，有些细节在未来的版本中可能已经改变。
+:::
+
+这个问题最初被发现于 [ClassIsland/ClassIsland#1333](https://github.com/ClassIsland/ClassIsland/issues/1333)，即使用 STA 初始化应用并初始化 SoundFlow 后应用会在执行 COM 操作时随机崩溃。
+
+这个问题源于 Avalonia 在 Windows 平台上的 COM 调用时发生的一些问题，进一步研究发现，这由 SoundFlow 在初始化时将主线程的 COM Apartment 意外设置为 MTA 导致。这进一步导致 Avalonia 在进行 COM 调用时调用了被销毁的 ComApartment，进而导致应用崩溃。相关的问题已经有人在 [LSXPrime/SoundFlow#90](https://github.com/LSXPrime/SoundFlow/issues/90) 讨论过。
+
+要解决这个问题，可以考虑将 SoundFlow 调用移动到主线程以外的线程上，比如使用 Task.Run 包装 SoundFlow 相关调用。
+
+但经过实践发现，如果在异步线程中使用 SoundFlow 相关接口，还需要注意 `AudioPlaybackDevice`、`SoundPlayer` 等 SoundFlow 相关的类从创建到释放的所有操作都需要保持在相同的线程上进行，否则可能会在进行 COM 操作时导致阻塞。在中途使用如 `await` 等可能切换线程的语句时，要格外谨慎。
+
+## 虚拟化容器中元素高度不同会导致滚动抽搐
+

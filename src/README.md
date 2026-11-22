@@ -3,7 +3,7 @@ home: true
 layout: BlogHome
 icon: house
 title: 博客主页
-heroImage: https://blogs.hellowrc.dev/avatar-circle.png
+heroImage: /avatar-circle.png
 heroText: HelloWRC.Dev
 heroFullScreen: true
 tagline: 一个学生，平时喜欢写一些有意思的小东西。
@@ -18,4 +18,4 @@ bgImageStyle:
   opacity: 0.75
 ---
 
-> 头像与背景图来自 [@爱东东不爱吃生肉](https://space.bilibili.com/327910485/) 和 [@世界](https://www.pixiv.net/users/16905420)
+> 背景图来自 [@世界](https://www.pixiv.net/users/16905420)

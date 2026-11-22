@@ -11,7 +11,7 @@ export default hopeTheme({
     url: "https://blogs.hellowrc.dev",
   },
 
-  logo: "https://blogs.hellowrc.dev/avatar-circle.png",
+  logo: "/avatar-circle.png",
 
   repo: "HelloWRC/hellowrc.github.io",
 
