@@ -4,6 +4,6 @@ export default sidebar({
   "/": [
     "",
     "intro.md",
-    "customizing-windows-lockscreen.md"
+    // "customizing-windows-lockscreen.md"
   ],
 });
