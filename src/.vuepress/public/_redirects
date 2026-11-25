@@ -1,0 +1,3 @@
+# Serve VuePress directory indexes while preserving article URLs ending in .html.
+/   /index.html        200
+/*/ /:splat/index.html 200
