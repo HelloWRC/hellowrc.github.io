@@ -63,9 +63,29 @@
 
 实现方法很简单，在需要解锁时直接退出应用即可。此时就会回到登录解锁页面。但这实际上不属于锁屏的正常退出流程，会被记录到微软的遥测事件中。
 
-实际上，比较正规的方式是调用[`LockApplicationHost`](https://learn.microsoft.com/zh-cn/uwp/api/windows.applicationmodel.lockscreen.lockapplicationhost?view=winrt-26100)下提供的解锁接口，但这属于 Windows 的保留能力，第三方 UWP 应用无法调用，在此不做讨论。
+实际上，比较正规的方式是调用[`LockApplicationHost`](https://learn.microsoft.com/zh-cn/uwp/api/windows.applicationmodel.lockscreen.lockapplicationhost?view=winrt-26100)下提供的解锁接口，但这属于 Windows 的保留能力，第三方 UWP 应用无法调用。但是，如果能接受引入一个 fullTrust 辅助进程，可以通过发送 `LockAppHostGlobalUnlockEvent` 事件来实现解锁。这和 `LockApplicationHost` 的 RequestUnlock 方法是等价的，也不需要申请别的特殊权限。
+
+简要示例代码如下：
+
+``` cpp
+HANDLE h = OpenEventW(EVENT_MODIFY_STATE, FALSE, L"Local\\LockAppHostGlobalUnlockEvent");
+if (h) { SetEvent(h); CloseHandle(h); }   // 宿主 = 收到一次等价的 RequestUnlock
+```
 
 至此，我们就完成了一个锁屏应用的基本闭环。你可以在此基础上，在上面显示些你喜欢的东西，比如动态壁纸、时钟、课表等等。只要是普通 UWP 应用能实现的，在这里也基本能实现。
+
+## 别的小问题
+
+在本文章初次编写完后，我在推进 [OhMyLockScreen](https://github.com/HelloWRC/OhMyLockScreen) 时又遇到了些别的奇奇怪怪的问题，在这里也一并说明下。
+
+首先，在这个应用被激活到锁屏上后，你可能很快就会发现，由于某些原因[^2]，在开始菜单再也没法打开这个应用了！事实上这是应用被错误的激活到了锁屏宿主上，而不是常规窗口宿主。有两种解决方案：
+
+1. 在进入这种错误情况时重启 explorer.exe。这是因为 explorer 错误地缓存了一部分激活信息，重启 explorer 后可以消除这种错误的缓存，但需要引入 fullTrust 辅助进程。
+2. 创建另一个 Application 入口点。这可以规避上一条中提到的异常缓存问题，但在上架微软商店时需要额外资质审核，极大提升了上架难度。如果作为个人开发者身份需要将此锁屏应用上架商店，不建议使用此方法。
+
+此外，这种自定义锁屏应用实际上是可以上架到微软商店并通过审核的[^3]。所以，如果你开发了一个很棒的锁屏自定义工具，可以将微软商店列入分发渠道的考虑中。
+
+但上架商店引入了另一项问题：微软商店的审核机制对除了 `runFullTrust` 外的受限功能（`rescap`）有比较严格的审核约束。而在应用包内设置锁屏提供方选项（不管是否通过完全信任进程）时需要禁用注册表虚拟化才能正常设置，这正需要 `rescap:unvirtualizedResources` 受限能力，导致应用很难通过审核。因此，如果要上架微软商店，一种让用户设置锁屏提供方的方式就是借助外部工具（如[LockScreenSwitcher](https://github.com/HelloWRC/LockScreenSwitcher)）。
 
 ## 恢复
 
@@ -161,3 +181,5 @@ flowchart TD
 期待这篇文章能够启发更多开发者，开发出有意思的锁屏自定义工具。
 
 [^1]: 早期 Windows 按下<kbd>Ctrl</kbd> + <kbd>Alt</kbd> + <kbd>Del</kbd>的示意图标形如捡肥皂的动作。
+[^2]: 具体原因有待进一步研究。
+[^3]: <https://apps.microsoft.com/detail/9pnh2x9k2v25>
